@@ -20,7 +20,7 @@ const WHATSAPP_NUMBER = "918637287899";
 // EmailJS config for lead notifications
 const EMAILJS_SERVICE_ID = "service_nfkd5do";
 const EMAILJS_TEMPLATE_ID = "template_bczee25";
-const EMAILJS_PUBLIC_KEY = "RRlFNa7RyrF3_FlAf";
+const EMAILJS_PUBLIC_KEY = "RRIFNa7RyrF3_FiAf";
 
 // Context-aware pre-filled messages for different CTAs
 const WHATSAPP_MESSAGES = {
