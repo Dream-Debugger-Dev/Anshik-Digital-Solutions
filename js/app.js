@@ -17,6 +17,11 @@
 // ⚠️ REPLACE with your actual WhatsApp number
 const WHATSAPP_NUMBER = "918637287899";
 
+// EmailJS config for lead notifications
+const EMAILJS_SERVICE_ID = "service_nfkd5do";
+const EMAILJS_TEMPLATE_ID = "template_bczee25";
+const EMAILJS_PUBLIC_KEY = "RRlFNa7RyrF3_FlAf";
+
 // Context-aware pre-filled messages for different CTAs
 const WHATSAPP_MESSAGES = {
   general:   "Hi! I'm interested in your digital services for my business.",
@@ -65,6 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initBackToTop();
   initFAQ();
   initForm();
+  loadDynamicContent();
 });
 
 /* ========== WhatsApp Links (Context-Aware) ========== */
@@ -203,6 +209,9 @@ function initForm() {
         modal.classList.add("active");
         form.reset();
         trackClick("form_submit");
+
+        // Send email notification (non-blocking)
+        sendLeadNotification(name, phone, businessType);
       } else {
         alert("Something went wrong. Please try again or contact us on WhatsApp.");
       }
@@ -330,3 +339,212 @@ function initBackToTop() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
+
+/* ========== Dynamic Content from Firestore ========== */
+/* Loads content saved via Admin Panel and updates the website */
+
+async function loadDynamicContent() {
+  try {
+    await loadDynamicStats();
+    await loadDynamicHero();
+    await loadDynamicServices();
+    await loadDynamicUpcoming();
+    await loadDynamicWhyMe();
+    await loadDynamicTestimonials();
+    await loadDynamicFAQ();
+  } catch (err) {
+    console.log("Using default content (Firestore unavailable or no admin data yet)");
+  }
+}
+
+/* --- Stats --- */
+async function loadDynamicStats() {
+  const doc = await db.collection("siteContent").doc("stats").get();
+  if (!doc.exists) return;
+  const d = doc.data();
+  const counters = document.querySelectorAll("[data-count]");
+  const mapping = [d.clients, d.delivery, d.support, d.price];
+  counters.forEach((el, i) => {
+    if (mapping[i] !== undefined) {
+      el.setAttribute("data-count", mapping[i]);
+    }
+  });
+}
+
+/* --- Testimonials --- */
+async function loadDynamicTestimonials() {
+  const doc = await db.collection("siteContent").doc("testimonials").get();
+  if (!doc.exists) return;
+  const list = doc.data().list || [];
+  if (list.length === 0) return;
+
+  const grid = document.querySelector(".testimonials-grid");
+  if (!grid) return;
+
+  grid.innerHTML = list.map(t => `
+    <div class="testimonial-card">
+      <span class="quote-icon">❝</span>
+      <div class="stars">${"★ ".repeat(t.stars || 5).trim()}</div>
+      <p>"${t.text}"</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">${t.initials}</div>
+        <div>
+          <h4>${t.name}</h4>
+          <span>${t.business}</span>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  // Duplicate for marquee loop
+  grid.innerHTML = grid.innerHTML + grid.innerHTML;
+}
+
+/* --- FAQ --- */
+async function loadDynamicFAQ() {
+  const doc = await db.collection("siteContent").doc("faq").get();
+  if (!doc.exists) return;
+  const list = doc.data().list || [];
+  if (list.length === 0) return;
+
+  const faqList = document.querySelector(".faq-list");
+  if (!faqList) return;
+
+  faqList.innerHTML = list.map(f => `
+    <div class="faq-item">
+      <button class="faq-question" aria-expanded="false">
+        ${f.q}
+        <span class="faq-icon">+</span>
+      </button>
+      <div class="faq-answer">
+        <p>${f.a}</p>
+      </div>
+    </div>
+  `).join("");
+
+  // Re-init FAQ accordion for new elements
+  initFAQ();
+}
+
+/* --- Services --- */
+async function loadDynamicServices() {
+  const doc = await db.collection("siteContent").doc("services").get();
+  if (!doc.exists) return;
+  const list = doc.data().list || [];
+  if (list.length === 0) return;
+
+  const grid = document.querySelector(".services-grid");
+  if (!grid) return;
+
+  grid.innerHTML = list.map(s => `
+    <div class="service-card ${s.popular ? 'popular' : ''}">
+      ${s.popular ? '<div class="popular-badge">🔥 Most Popular</div>' : ''}
+      <div class="service-icon">${s.icon}</div>
+      <h3>${s.title}</h3>
+      <p>${s.desc}</p>
+      <div class="service-price">₹${s.price} <small>one-time</small></div>
+      <a href="#" class="btn ${s.popular ? 'btn-primary' : 'btn-outline'}" data-whatsapp data-wa-context="${s.context || 'general'}">${s.popular ? 'Best Value →' : 'Get Started'}</a>
+    </div>
+  `).join("");
+
+  // Re-init WhatsApp links for new buttons
+  initWhatsAppLinks();
+}
+
+/* --- Hero --- */
+async function loadDynamicHero() {
+  const doc = await db.collection("siteContent").doc("hero").get();
+  if (!doc.exists) return;
+  const d = doc.data();
+
+  const h1 = document.querySelector(".hero-content h1");
+  const p = document.querySelector(".hero-content p");
+  if (h1 && d.headline) {
+    // Wrap "Google" in gradient span if present
+    h1.innerHTML = d.headline.replace(/Google/g, '<span>Google</span>');
+  }
+  if (p && d.description) p.textContent = d.description;
+}
+
+/* --- Upcoming / Coming Soon --- */
+async function loadDynamicUpcoming() {
+  const doc = await db.collection("siteContent").doc("upcoming").get();
+  if (!doc.exists) return;
+  const list = doc.data().list || [];
+
+  const container = document.querySelector(".services-grid[style]");
+  if (!container) {
+    // Find the coming soon grid by looking for upcoming cards
+    const allGrids = document.querySelectorAll(".services-grid");
+    const upcomingGrid = allGrids[allGrids.length - 1];
+    if (!upcomingGrid) return;
+    updateUpcomingGrid(upcomingGrid, list);
+  } else {
+    updateUpcomingGrid(container, list);
+  }
+}
+
+function updateUpcomingGrid(grid, list) {
+  if (list.length === 0) {
+    grid.parentElement.style.display = "none";
+    return;
+  }
+  grid.innerHTML = list.map(u => `
+    <div class="service-card upcoming">
+      <div class="upcoming-badge">Coming Soon</div>
+      <div class="service-icon">${u.icon}</div>
+      <h3>${u.title}</h3>
+      <p>${u.desc}</p>
+      <span class="btn btn-outline" style="opacity: 0.6; cursor: default; pointer-events: none;">Launching Soon</span>
+    </div>
+  `).join("");
+}
+
+/* --- Why Choose Me --- */
+async function loadDynamicWhyMe() {
+  const doc = await db.collection("siteContent").doc("whyMe").get();
+  if (!doc.exists) return;
+  const list = doc.data().list || [];
+  if (list.length === 0) return;
+
+  const grid = document.querySelector(".features-grid");
+  if (!grid) return;
+
+  grid.innerHTML = list.map(w => `
+    <div class="feature-item">
+      <div class="feature-icon">${w.icon}</div>
+      <h3>${w.title}</h3>
+      <p>${w.desc}</p>
+    </div>
+  `).join("");
+}
+
+/* ========== Email Notification for New Leads ========== */
+function sendLeadNotification(name, phone, businessType) {
+  if (typeof emailjs === "undefined") return;
+
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    name: name,
+    phone: phone,
+    businessType: businessType,
+    time: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
+  }, EMAILJS_PUBLIC_KEY)
+  .then(() => console.log("Lead notification email sent"))
+  .catch((err) => console.log("Email notification failed:", err));
+}
+
+/* ========== Testimonials Marquee (duplicate for seamless loop) ========== */
+function initMarquee() {
+  const grid = document.querySelector(".testimonials-grid");
+  if (!grid) return;
+
+  // Duplicate all cards for seamless infinite scroll
+  const cards = grid.innerHTML;
+  grid.innerHTML = cards + cards;
+}
+
+// Run after dynamic content loads
+document.addEventListener("DOMContentLoaded", () => {
+  // Delay to let dynamic testimonials load first
+  setTimeout(initMarquee, 1500);
+});
