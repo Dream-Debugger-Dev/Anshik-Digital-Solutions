@@ -171,14 +171,19 @@ async function loadStats() {
 }
 
 async function saveStats() {
-  const data = {
-    clients: parseInt(document.getElementById("stat-clients").value) || 0,
-    delivery: parseInt(document.getElementById("stat-delivery").value) || 0,
-    support: parseInt(document.getElementById("stat-support").value) || 0,
-    price: parseInt(document.getElementById("stat-price").value) || 0
-  };
-  await db.collection("siteContent").doc("stats").set(data);
-  showSaved();
+  try {
+    const data = {
+      clients: parseInt(document.getElementById("stat-clients").value) || 0,
+      delivery: parseInt(document.getElementById("stat-delivery").value) || 0,
+      support: parseInt(document.getElementById("stat-support").value) || 0,
+      price: parseInt(document.getElementById("stat-price").value) || 0
+    };
+    await db.collection("siteContent").doc("stats").set(data);
+    showSaved();
+  } catch (err) {
+    console.error("Error saving stats:", err);
+    alert("Failed to save. Error: " + err.message);
+  }
 }
 
 /* ========================================
@@ -203,7 +208,7 @@ async function loadServices() {
 function renderServices() {
   const container = document.getElementById("servicesContainer");
   container.innerHTML = servicesData.map((s, i) => `
-    <div class="editor-card">
+    <div class="editor-card" data-index="${i}">
       <div class="editor-card-header">
         <h3>${s.icon} Service ${i + 1} ${s.popular ? '(Most Popular)' : ''}</h3>
         <button class="btn-remove" onclick="removeService(${i})">Remove</button>
@@ -211,21 +216,21 @@ function renderServices() {
       <div class="form-row">
         <div class="form-field">
           <label>Icon (emoji)</label>
-          <input type="text" value="${s.icon}" onchange="servicesData[${i}].icon=this.value">
+          <input type="text" class="svc-icon" value="${s.icon}" oninput="servicesData[${i}].icon=this.value">
         </div>
         <div class="form-field">
           <label>Price (₹)</label>
-          <input type="text" value="${s.price}" onchange="servicesData[${i}].price=this.value">
+          <input type="text" class="svc-price" value="${s.price}" oninput="servicesData[${i}].price=this.value">
         </div>
       </div>
       <div class="form-row">
         <div class="form-field">
           <label>Title</label>
-          <input type="text" value="${s.title}" onchange="servicesData[${i}].title=this.value">
+          <input type="text" class="svc-title" value="${s.title}" oninput="servicesData[${i}].title=this.value">
         </div>
         <div class="form-field">
           <label>Most Popular?</label>
-          <select onchange="servicesData[${i}].popular=(this.value==='true')">
+          <select class="svc-popular" onchange="servicesData[${i}].popular=(this.value==='true')">
             <option value="false" ${!s.popular ? 'selected' : ''}>No</option>
             <option value="true" ${s.popular ? 'selected' : ''}>Yes</option>
           </select>
@@ -233,15 +238,22 @@ function renderServices() {
       </div>
       <div class="form-field">
         <label>Description</label>
-        <textarea onchange="servicesData[${i}].desc=this.value">${s.desc}</textarea>
+        <textarea class="svc-desc" oninput="servicesData[${i}].desc=this.value">${s.desc}</textarea>
       </div>
     </div>
   `).join("");
 }
 
 async function saveServices() {
-  await db.collection("siteContent").doc("services").set({ list: servicesData });
-  showSaved();
+  try {
+    console.log("Saving services...", servicesData);
+    await db.collection("siteContent").doc("services").set({ list: servicesData });
+    console.log("Services saved!");
+    showSaved();
+  } catch (err) {
+    console.error("Error saving services:", err);
+    alert("Failed to save. Error: " + err.message);
+  }
 }
 
 /* ========================================
@@ -307,13 +319,18 @@ function removeTestimonial(index) {
 }
 
 async function saveTestimonials() {
-  testimonialsData.forEach(t => {
-    if (t.name && !t.initials) {
-      t.initials = t.name.split(" ").map(w => w[0]).join("").toUpperCase();
-    }
-  });
-  await db.collection("siteContent").doc("testimonials").set({ list: testimonialsData });
-  showSaved();
+  try {
+    testimonialsData.forEach(t => {
+      if (t.name && !t.initials) {
+        t.initials = t.name.split(" ").map(w => w[0]).join("").toUpperCase();
+      }
+    });
+    await db.collection("siteContent").doc("testimonials").set({ list: testimonialsData });
+    showSaved();
+  } catch (err) {
+    console.error("Error saving testimonials:", err);
+    alert("Failed to save. Error: " + err.message);
+  }
 }
 
 /* ========================================
@@ -373,8 +390,13 @@ function removeFAQ(index) {
 }
 
 async function saveFAQ() {
-  await db.collection("siteContent").doc("faq").set({ list: faqData });
-  showSaved();
+  try {
+    await db.collection("siteContent").doc("faq").set({ list: faqData });
+    showSaved();
+  } catch (err) {
+    console.error("Error saving FAQ:", err);
+    alert("Failed to save. Error: " + err.message);
+  }
 }
 
 /* ========================================
@@ -430,11 +452,16 @@ async function loadHero() {
 }
 
 async function saveHero() {
-  await db.collection("siteContent").doc("hero").set({
-    headline: document.getElementById("hero-headline").value,
-    description: document.getElementById("hero-description").value
-  });
-  showSaved();
+  try {
+    await db.collection("siteContent").doc("hero").set({
+      headline: document.getElementById("hero-headline").value,
+      description: document.getElementById("hero-description").value
+    });
+    showSaved();
+  } catch (err) {
+    console.error("Error saving hero:", err);
+    alert("Failed to save. Error: " + err.message);
+  }
 }
 
 /* ========================================
@@ -513,8 +540,13 @@ function removeUpcoming(index) {
 }
 
 async function saveUpcoming() {
-  await db.collection("siteContent").doc("upcoming").set({ list: upcomingData });
-  showSaved();
+  try {
+    await db.collection("siteContent").doc("upcoming").set({ list: upcomingData });
+    showSaved();
+  } catch (err) {
+    console.error("Error saving upcoming:", err);
+    alert("Failed to save. Error: " + err.message);
+  }
 }
 
 /* ========================================
@@ -578,8 +610,13 @@ function removeWhyMe(index) {
 }
 
 async function saveWhyMe() {
-  await db.collection("siteContent").doc("whyMe").set({ list: whyMeData });
-  showSaved();
+  try {
+    await db.collection("siteContent").doc("whyMe").set({ list: whyMeData });
+    showSaved();
+  } catch (err) {
+    console.error("Error saving features:", err);
+    alert("Failed to save. Error: " + err.message);
+  }
 }
 
 /* ========================================
