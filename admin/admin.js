@@ -26,7 +26,7 @@ const EMAILJS_SERVICE_ID = "service_nfkd5do";
 const EMAILJS_PUBLIC_KEY = "ilS2Lf40YU07jVTds";
 // You'll need to create a second template for security alerts
 // Template variables: {{email}}, {{time}}, {{ip}}, {{userAgent}}
-const EMAILJS_ALERT_TEMPLATE_ID = "template_security";
+const EMAILJS_ALERT_TEMPLATE_ID = "template_d9l0fzm";
 
 let failedAttempts = 0;
 
@@ -600,14 +600,10 @@ async function sendSecurityAlert(attemptedEmail, errorCode) {
 
   // Send alert using the lead notification template (reusing it)
   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_ALERT_TEMPLATE_ID, {
-    name: "⚠️ SECURITY ALERT",
-    phone: ip,
-    businessType: "Failed Login Attempt #" + failedAttempts,
-    time: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "medium" }),
     email: attemptedEmail,
     ip: ip,
-    userAgent: navigator.userAgent,
-    errorCode: errorCode
+    time: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "medium" }),
+    userAgent: navigator.userAgent
   }, EMAILJS_PUBLIC_KEY)
   .then(() => console.log("Security alert sent"))
   .catch((err) => console.log("Security alert failed:", err));
