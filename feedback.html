@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leave a Review | Anshik Digital Solutions</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366F1;
+      --dark: #0B0F1A;
+      --dark-card: #111827;
+      --border: #1F2937;
+      --text: #F1F5F9;
+      --muted: #94A3B8;
+      --accent: #22D3EE;
+      --gold: #FBBF24;
+      --green: #25D366;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 1.5rem;
+    }
+    .feedback-card {
+      background: var(--dark-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      max-width: 480px; width: 100%;
+    }
+    .feedback-card h1 {
+      font-size: 1.5rem; font-weight: 800;
+      text-align: center; margin-bottom: 0.25rem;
+    }
+    .feedback-card .subtitle {
+      text-align: center; color: var(--muted);
+      font-size: 0.9rem; margin-bottom: 2rem;
+    }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label {
+      display: block; font-size: 0.78rem; font-weight: 600;
+      margin-bottom: 0.4rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.03em;
+    }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 0.8rem 1rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 0.93rem;
+      font-family: inherit; outline: none;
+      transition: border-color 0.3s;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      border-color: var(--primary);
+    }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+    .form-group input.error { border-color: #EF4444; }
+    .error-msg { color: #EF4444; font-size: 0.78rem; margin-top: 0.3rem; display: none; }
+
+    /* Star Rating */
+    .star-rating { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center; }
+    .star-rating .star {
+      font-size: 2.2rem; cursor: pointer;
+      color: var(--border); transition: all 0.2s;
+      user-select: none;
+    }
+    .star-rating .star:hover,
+    .star-rating .star.active { color: var(--gold); transform: scale(1.15); }
+    .star-label {
+      text-align: center; font-size: 0.85rem;
+      color: var(--muted); margin-bottom: 1.5rem;
+      min-height: 1.2em;
+    }
+
+    .btn-submit {
+      width: 100%; padding: 0.9rem;
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      transition: all 0.3s; position: relative;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(99,102,241,0.4); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      display: none; width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: #fff; border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Success State */
+    .success-state { display: none; text-align: center; padding: 2rem 0; }
+    .success-state .icon { font-size: 3.5rem; margin-bottom: 1rem; }
+    .success-state h2 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .success-state p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+
+    .brand {
+      text-align: center; margin-top: 2rem;
+      font-size: 0.8rem; color: var(--muted); opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="feedback-card">
+    <!-- Form State -->
+    <div id="formState">
+      <h1>⭐ Leave a Review</h1>
+      <p class="subtitle">Your feedback helps me improve and grow</p>
+
+      <form id="feedbackForm" novalidate>
+        <div class="form-group">
+          <label>Your Name *</label>
+          <input type="text" id="fbName" placeholder="e.g. Rahul Sharma" required>
+          <div class="error-msg" id="nameError"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Your Business *</label>
+          <input type="text" id="fbBusiness" placeholder="e.g. Cleaning Service, Hyderabad" required>
+          <div class="error-msg" id="bizError"></div>
+        </div>
+
+        <label style="display:block; font-size:0.78rem; font-weight:600; color:#94A3B8; text-transform:uppercase; letter-spacing:0.03em; text-align:center; margin-bottom:0.5rem;">Rate your experience *</label>
+        <div class="star-rating" id="starRating">
+          <span class="star" data-value="1">★</span>
+          <span class="star" data-value="2">★</span>
+          <span class="star" data-value="3">★</span>
+          <span class="star" data-value="4">★</span>
+          <span class="star" data-value="5">★</span>
+        </div>
+        <div class="star-label" id="starLabel">Tap a star to rate</div>
+
+        <div class="form-group">
+          <label>Your Review *</label>
+          <textarea id="fbReview" placeholder="Tell others about your experience..." required></textarea>
+          <div class="error-msg" id="reviewError"></div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitBtn">
+          <span id="btnText">Submit Review</span>
+          <div class="spinner" id="spinner"></div>
+        </button>
+      </form>
+    </div>
+
+    <!-- Success State -->
+    <div class="success-state" id="successState">
+      <div class="icon">🎉</div>
+      <h2>Thank You!</h2>
+      <p>Your review has been submitted and will appear on the website once approved. I really appreciate your feedback!</p>
+    </div>
+
+    <div class="brand">Anshik Digital Solutions</div>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase/firebase-config.js"></script>
+
+  <script>
+    let selectedRating = 0;
+    const starLabels = ["", "Poor", "Fair", "Good", "Great", "Excellent!"];
+
+    // Star rating interaction
+    document.querySelectorAll(".star").forEach(star => {
+      star.addEventListener("click", () => {
+        selectedRating = parseInt(star.dataset.value);
+        document.querySelectorAll(".star").forEach((s, i) => {
+          s.classList.toggle("active", i < selectedRating);
+        });
+        document.getElementById("starLabel").textContent = starLabels[selectedRating];
+      });
+
+      star.addEventListener("mouseenter", () => {
+        const val = parseInt(star.dataset.value);
+        document.querySelectorAll(".star").forEach((s, i) => {
+          s.style.color = i < val ? "#FBBF24" : "";
+        });
+      });
+    });
+
+    document.getElementById("starRating").addEventListener("mouseleave", () => {
+      document.querySelectorAll(".star").forEach((s, i) => {
+        s.style.color = "";
+      });
+    });
+
+    // Form submit
+    document.getElementById("feedbackForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("fbName").value.trim();
+      const business = document.getElementById("fbBusiness").value.trim();
+      const review = document.getElementById("fbReview").value.trim();
+      let valid = true;
+
+      // Validate
+      if (name.length < 2) {
+        showErr("fbName", "nameError", "Please enter your name");
+        valid = false;
+      } else { clearErr("fbName", "nameError"); }
+
+      if (business.length < 2) {
+        showErr("fbBusiness", "bizError", "Please enter your business");
+        valid = false;
+      } else { clearErr("fbBusiness", "bizError"); }
+
+      if (selectedRating === 0) {
+        document.getElementById("starLabel").textContent = "Please select a rating";
+        document.getElementById("starLabel").style.color = "#EF4444";
+        valid = false;
+      }
+
+      if (review.length < 10) {
+        showErr("fbReview", "reviewError", "Please write at least a few words");
+        valid = false;
+      } else { clearErr("fbReview", "reviewError"); }
+
+      if (!valid) return;
+
+      // Show loading
+      document.getElementById("btnText").textContent = "Submitting...";
+      document.getElementById("spinner").style.display = "block";
+      document.getElementById("submitBtn").disabled = true;
+
+      try {
+        await db.collection("reviews").add({
+          name: name,
+          initials: name.split(" ").map(w => w[0]).join("").toUpperCase(),
+          business: business,
+          text: review,
+          stars: selectedRating,
+          status: "pending",
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Show success
+        document.getElementById("formState").style.display = "none";
+        document.getElementById("successState").style.display = "block";
+      } catch (err) {
+        console.error("Error:", err);
+        alert("Something went wrong. Please try again.");
+        document.getElementById("btnText").textContent = "Submit Review";
+        document.getElementById("spinner").style.display = "none";
+        document.getElementById("submitBtn").disabled = false;
+      }
+    });
+
+    function showErr(inputId, errId, msg) {
+      document.getElementById(inputId).classList.add("error");
+      const el = document.getElementById(errId);
+      el.textContent = msg; el.style.display = "block";
+    }
+    function clearErr(inputId, errId) {
+      document.getElementById(inputId).classList.remove("error");
+      document.getElementById(errId).style.display = "none";
+    }
+  </script>
+
+</body>
+</html>
