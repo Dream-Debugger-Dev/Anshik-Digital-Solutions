@@ -1,0 +1,49 @@
+// ============================================
+// Firestore Security Rules for Anshik Digital
+// Paste these in Firebase Console → Firestore → Rules
+// ============================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Lead capture form
+    match /leads/{leadId} {
+      // Only logged-in admin can read leads
+      allow read: if request.auth != null;
+
+      allow create: if
+        request.resource.data.keys().hasAll(['name', 'phone', 'businessType', 'timestamp', 'status'])
+        && request.resource.data.keys().size() == 5
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 2
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() == 10
+        && request.resource.data.phone.matches('^[6-9][0-9]{9}$')
+        && request.resource.data.businessType is string
+        && request.resource.data.businessType in [
+          'Cleaning Service', 'Salon / Spa', 'Gym / Fitness',
+          'Restaurant / Cafe', 'Retail Shop', 'Medical / Clinic',
+          'Education / Coaching', 'Real Estate', 'Other'
+        ]
+        && request.resource.data.status == 'new'
+        && request.resource.data.timestamp == request.time;
+
+      allow update, delete: if false;
+    }
+
+    // Site content (managed by admin panel)
+    // Read: anyone (website needs to load content)
+    // Write: only logged-in admin
+    match /siteContent/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Block everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
