@@ -23,7 +23,7 @@ const auth = firebase.auth();
 
 // EmailJS config (same as main site)
 const EMAILJS_SERVICE_ID = "service_nfkd5do";
-const EMAILJS_PUBLIC_KEY = "RRlFNa7RyrF3_FlAf";
+const EMAILJS_PUBLIC_KEY = "RRIFNa7RyrF3_FiAf";
 // You'll need to create a second template for security alerts
 // Template variables: {{email}}, {{time}}, {{ip}}, {{userAgent}}
 const EMAILJS_ALERT_TEMPLATE_ID = "template_security";
