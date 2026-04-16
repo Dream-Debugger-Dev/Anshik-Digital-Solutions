@@ -54,6 +54,7 @@
       <button class="tab" data-tab="testimonials">💬 Testimonials</button>
       <button class="tab" data-tab="faq">❓ FAQ</button>
       <button class="tab" data-tab="leads">📋 Leads</button>
+      <button class="tab" data-tab="reviews">⭐ Reviews</button>
     </nav>
 
     <main class="admin-content">
@@ -182,6 +183,21 @@
               <tr><td colspan="5" style="text-align:center; padding:2rem;">Click "Refresh Leads" to load</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- ========== REVIEWS TAB ========== -->
+      <section class="tab-content" id="tab-reviews">
+        <h2>Client Reviews</h2>
+        <p class="tab-desc">Approve or reject reviews submitted by clients. Approved reviews appear on the website and update the average rating automatically.</p>
+        <p class="tab-desc" style="margin-bottom:0.5rem;">
+          <strong>Feedback link to share with clients:</strong><br>
+          <code id="feedbackLink" style="background:var(--bg-input); padding:0.4rem 0.8rem; border-radius:6px; font-size:0.85rem; cursor:pointer; display:inline-block; margin-top:0.5rem;" onclick="copyFeedbackLink()">Loading...</code>
+          <span id="copyStatus" style="color:var(--accent); font-size:0.8rem; margin-left:0.5rem; opacity:0;"></span>
+        </p>
+        <button class="btn-admin" onclick="loadReviews()" style="margin-bottom:1rem;">🔄 Refresh Reviews</button>
+        <div id="reviewsContainer">
+          <p style="color:var(--text-muted); text-align:center; padding:2rem;">Click "Refresh Reviews" to load</p>
         </div>
       </section>
 

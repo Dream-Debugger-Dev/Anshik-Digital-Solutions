@@ -645,3 +645,128 @@ async function sendSecurityAlert(attemptedEmail, errorCode) {
   .then(() => console.log("Security alert sent"))
   .catch((err) => console.log("Security alert failed:", err));
 }
+
+/* ========================================
+   REVIEWS (Approve / Reject)
+   ======================================== */
+async function loadReviews() {
+  const container = document.getElementById("reviewsContainer");
+  container.innerHTML = '<p style="text-align:center; padding:2rem;">Loading...</p>';
+
+  try {
+    const snapshot = await db.collection("reviews").orderBy("timestamp", "desc").get();
+
+    if (snapshot.empty) {
+      container.innerHTML = '<p style="text-align:center; padding:2rem; color:var(--text-muted);">No reviews yet. Share the feedback link with your clients!</p>';
+      return;
+    }
+
+    container.innerHTML = snapshot.docs.map(doc => {
+      const d = doc.data();
+      const date = d.timestamp ? d.timestamp.toDate().toLocaleDateString("en-IN", {
+        day: "numeric", month: "short", year: "numeric"
+      }) : "—";
+      const statusColor = d.status === "approved" ? "var(--accent)" : d.status === "rejected" ? "#EF4444" : "#F59E0B";
+      const stars = "★".repeat(d.stars || 5) + "☆".repeat(5 - (d.stars || 5));
+
+      return `
+        <div class="editor-card" style="border-left: 3px solid ${statusColor};">
+          <div class="editor-card-header">
+            <h3>${d.name} — <span style="color:${statusColor}; text-transform:uppercase; font-size:0.75rem;">${d.status}</span></h3>
+            <span style="font-size:0.8rem; color:var(--text-muted);">${date}</span>
+          </div>
+          <p style="color:#FBBF24; margin-bottom:0.5rem;">${stars}</p>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:0.5rem; font-style:italic;">"${d.text}"</p>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">${d.business}</p>
+          ${d.status === "pending" ? `
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn-admin btn-save" style="margin:0; padding:0.5rem 1rem; font-size:0.8rem;" onclick="approveReview('${doc.id}')">✓ Approve</button>
+              <button class="btn-remove" onclick="rejectReview('${doc.id}')">✗ Reject</button>
+            </div>
+          ` : d.status === "approved" ? `
+            <button class="btn-remove" onclick="rejectReview('${doc.id}')">Remove from site</button>
+          ` : `
+            <button class="btn-admin" style="padding:0.5rem 1rem; font-size:0.8rem;" onclick="approveReview('${doc.id}')">✓ Approve</button>
+          `}
+        </div>
+      `;
+    }).join("");
+  } catch (err) {
+    console.error("Error loading reviews:", err);
+    container.innerHTML = '<p style="text-align:center; padding:2rem; color:#EF4444;">Error loading reviews.</p>';
+  }
+}
+
+async function approveReview(docId) {
+  try {
+    await db.collection("reviews").doc(docId).update({ status: "approved" });
+    await syncApprovedReviews();
+    loadReviews();
+    showSaved();
+  } catch (err) {
+    console.error("Error approving:", err);
+    alert("Error: " + err.message);
+  }
+}
+
+async function rejectReview(docId) {
+  if (!confirm("Reject this review?")) return;
+  try {
+    await db.collection("reviews").doc(docId).update({ status: "rejected" });
+    await syncApprovedReviews();
+    loadReviews();
+    showSaved();
+  } catch (err) {
+    console.error("Error rejecting:", err);
+    alert("Error: " + err.message);
+  }
+}
+
+// Sync approved reviews to siteContent/testimonials + update average rating
+async function syncApprovedReviews() {
+  try {
+    const snapshot = await db.collection("reviews").where("status", "==", "approved").get();
+    const approved = snapshot.docs.map(doc => doc.data());
+
+    // Update testimonials
+    const testimonials = approved.map(r => ({
+      name: r.name,
+      initials: r.initials || r.name.split(" ").map(w => w[0]).join("").toUpperCase(),
+      business: r.business,
+      text: r.text,
+      stars: r.stars
+    }));
+    await db.collection("siteContent").doc("testimonials").set({ list: testimonials });
+
+    // Update average rating in stats
+    if (approved.length > 0) {
+      const avgRating = Math.round((approved.reduce((sum, r) => sum + (r.stars || 5), 0) / approved.length) * 10) / 10;
+      const statsDoc = await db.collection("siteContent").doc("stats").get();
+      const stats = statsDoc.exists ? statsDoc.data() : {};
+      stats.clients = approved.length;
+      stats.rating = avgRating;
+      await db.collection("siteContent").doc("stats").set(stats);
+    }
+
+    console.log("Synced", approved.length, "approved reviews to site");
+  } catch (err) {
+    console.error("Error syncing reviews:", err);
+  }
+}
+
+// Copy feedback link
+function copyFeedbackLink() {
+  const link = document.getElementById("feedbackLink").textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    const status = document.getElementById("copyStatus");
+    status.textContent = "Copied!";
+    status.style.opacity = "1";
+    setTimeout(() => { status.style.opacity = "0"; }, 2000);
+  });
+}
+
+// Set feedback link on load
+document.addEventListener("DOMContentLoaded", () => {
+  const base = window.location.origin + window.location.pathname.replace("admin/admin.html", "");
+  document.getElementById("feedbackLink").textContent = base + "feedback.html";
+});
